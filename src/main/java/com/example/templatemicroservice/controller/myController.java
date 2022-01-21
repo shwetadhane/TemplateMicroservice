@@ -18,7 +18,7 @@ public class myController {
     public String doGet(@RequestParam(value = "name", defaultValue = "World") String name){
 
         List<String> service = discoveryClient.getServices();
-        return ("Hello Service: "+ service);
+        return ("Hello Services List: "+ service);
     }
 
 }
