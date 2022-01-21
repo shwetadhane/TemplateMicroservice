@@ -3,7 +3,7 @@ spring:
     name: template-microservice
   cloud:
     consul:
-      host: 172.28.138.224
+      host: 172.28.138.102
       port: 30213
 server:
   port: 8082
