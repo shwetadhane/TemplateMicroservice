@@ -11,6 +11,7 @@ spec:
       name: template-microservice
       labels:
         app: template-microservice
+        role: rolling-update
     spec:
       containers:
         - name: template-microservice
