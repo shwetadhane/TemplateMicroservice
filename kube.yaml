@@ -1,0 +1,52 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: template
+spec:
+  selector:
+    app: template
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8082
+      targetPort: 8082
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: template
+automountServiceAccountToken: true
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: template
+spec:
+  protocol: "http"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: template
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: template
+      app: template
+  template:
+    metadata:
+      labels:
+        service: template
+        app: template
+      annotations:
+        consul.hashicorp.com/connect-inject: "true"
+        consul.hashicorp.com/connect-service-upstreams: "template:8082"
+    spec:
+      serviceAccountName: template
+      containers:
+        - name: template
+          image: pradnyilk/template-microservice:latest
+          ports:
+            - containerPort: 8082
