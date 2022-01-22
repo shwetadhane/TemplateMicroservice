@@ -1,34 +1,41 @@
 pipeline {
 
-    environment {
-        dockerimagename = 'pradnyilk/template-microservice'
-        dockerImage = ""
+  options {
+    ansiColor('xterm')
+  }
+
+  agent {
+    kubernetes {
+      yamlFile 'builder.yaml'
+    }
+  }
+
+  stages {
+
+    stage('Kaniko Build & Push Image') {
+      steps {
+        container('kaniko') {
+          script {
+            sh '''
+            /kaniko/executor --dockerfile `pwd`/Dockerfile \
+                             --context `pwd` \
+                             --destination=pradnyilk/template-microservice:latest
+            '''
+          }
+        }
+      }
     }
 
-    agent any
-    stages {
-        stage('Checkout Source') {
-            steps {
-                git 'https://github.com/shwetadhane/TemplateMicroservice.git'
-            }
+    stage('Deploy App to Kubernetes') {
+      steps {
+        container('kubectl') {
+          withCredentials([file(credentialsId: 'mykubeconfig', variable: 'KUBECONFIG')]) {
+//             sh 'sed -i "s/<TAG>/${BUILD_NUMBER}/" deployement.yaml'
+            sh 'kubectl apply -f deployement.yaml'
+          }
         }
-        // stage('Docker Build Image'){
-        //     steps{
-        //         script{
-        //                 withDockerContainer(image: 'pradnyilk/template-microservice', toolName: 'docker',args: 'docker run') {
-        //                     // some block
-        //                 }
-        //         }
-        //     }
-        // }
-
-        stage('Deploy App to Kubernetes') {
-            steps{
-                script {
-                    kubernetesDeploy( configs: "deployement.yaml", kubeconfigId: "k8s")
-                    kubernetesDeploy( configs: "servcie.yaml", kubeconfigId: "k8s")
-                }
-            }
-        }
+      }
     }
+
+  }
 }
