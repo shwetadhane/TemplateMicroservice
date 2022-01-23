@@ -1,42 +1,75 @@
 pipeline {
 
-//   options {
-//     ansiColor('xterm')
-//   }
-
-  agent {
-    kubernetes {
-      label 'Built-In Node'
-      yamlFile 'builder.yaml'
-    }
+  options {
+    ansiColor('xterm')
   }
-
-  stages {
-
-    stage('Kaniko Build & Push Image') {
-      steps {
-        container('kaniko') {
-          script {
-            sh '''
-            /kaniko/executor --dockerfile `pwd`/Dockerfile \
-                             --context `pwd` \
-                             --destination=pradnyilk/template-microservice:latest
-            '''
-          }
-        }
-      }
+    environment {
+        dockerimagename = 'pradnyilk/template-microservice'
+        dockerImage = ""
+    }
+    tools{
+        maven 'maven'
     }
 
-    stage('Deploy App to Kubernetes') {
-      steps {
-        container('kubectl') {
-          withCredentials([file(credentialsId: 'mykubeconfig', variable: 'KUBECONFIG')]) {
-//             sh 'sed -i "s/<TAG>/${BUILD_NUMBER}/" deployement.yaml'
-            sh 'kubectl apply -f deployement.yaml'
-          }
+        // agent{
+        //     docker {
+        //         image 'pradnyilk/template-microservice'
+        //     }
+        // }
+      agent any
+    stages {
+        stage('Checkout Source') {
+            steps {
+                git 'https://github.com/shwetadhane/TemplateMicroservice.git'
+            }
         }
-      }
-    }
+        // stage('Docker Build Image'){
+        //     steps{
+        //         script{
+        //                 withDockerContainer(image: 'pradnyilk/template-microservice', toolName: 'docker',args: 'docker run') {
+        //                     // some block
+        //                 }
+        //         }
+        //     }
+        // }
+        stage ('Build') {
+            steps {
+                sh 'mvn -DskipTests=true clean install'
+            }
+        }
+        stage('Deploy App to Kubernetes') {
+            steps{
+                script {
+                    kubernetesDeploy( configs: "deployement.yaml", kubeconfigId: "k8s")
+                    kubernetesDeploy( configs: "servcie.yaml", kubeconfigId: "k8s")
+                }
+            }
+        }
+        stage('Rollout Latest changes to k8s') {
+            steps{
+                withKubeConfig([credentialsId: 'jenkins-robot-global']) {
+                    sh 'curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl"'
+                    sh 'chmod u+x ./kubectl'
+                    sh './kubectl rollout restart deployment template-microservice -n default'
+                    // sh './kubectl get pods'
+                }
+            }
+          }
+        // stage('Apply Kubernetes files') {
+        //         steps{
+        //             withKubeConfig([credentialsId: 'jenkins-robot', serverUrl: 'https://api.k8s.my-company.com']) {
+        //               sh 'kubectl apply -f my-kubernetes-directory'
+        //             }
+        //         }
+        //   }
+    //   stage('Deploy Dev') {
 
-  }
+    //           steps {
+    //                     container('kubectl') {
+    //                       // Create namespace if it doesn't exist
+    //                       sh("kubectl get pods")
+    //                     }
+    //         }
+    //   }
+    }
 }
