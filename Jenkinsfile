@@ -6,6 +6,7 @@ pipeline {
 
   agent {
     kubernetes {
+      label 'Built-In Node'
       yamlFile 'builder.yaml'
     }
   }
