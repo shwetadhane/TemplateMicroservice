@@ -50,8 +50,8 @@ pipeline {
                 withKubeConfig([credentialsId: 'jenkins-robot-global']) {
                     sh 'curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl"'
                     sh 'chmod u+x ./kubectl'
-                    sh './kubectl apply -f deployment.yaml'
-                    sh './kubectl apply -f servcie.yaml'
+                    sh './kubectl apply -f template-microservice-k8s-deployment.yaml'
+                    sh './kubectl apply -f template-microservice-k8s-svc.yaml'
                     sh './kubectl rollout restart deployment template-microservice -n default'
                     // sh './kubectl get pods'
                 }
