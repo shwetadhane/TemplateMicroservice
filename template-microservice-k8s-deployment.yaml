@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: template-microservice
+  namespace: default
   labels:
     app: template-microservice
 spec:
@@ -11,6 +12,7 @@ spec:
       name: template-microservice
       labels:
         app: template-microservice
+        role: rolling-update
     spec:
       containers:
         - name: template-microservice
